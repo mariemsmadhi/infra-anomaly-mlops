@@ -4,12 +4,23 @@ services:
     container_name: prometheus
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alert.rules.yml:/etc/prometheus/alert.rules.yml:ro
       - prometheus_data:/prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.retention.time=30d"
     ports:
       - "9090:9090"
+    restart: unless-stopped
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: alertmanager
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - ./alertmanager/telegram_token:/etc/alertmanager/telegram_token:ro
+    ports:
+      - "9093:9093"
     restart: unless-stopped
 
   grafana:
@@ -22,6 +33,15 @@ services:
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
     ports:
       - "3000:3000"
+    restart: unless-stopped
+
+  api:
+    build: .
+    container_name: anomaly-api
+    volumes:
+      - ./models:/app/models:ro
+    ports:
+      - "8000:8000"
     restart: unless-stopped
 
 volumes:

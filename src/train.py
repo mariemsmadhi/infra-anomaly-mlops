@@ -1,6 +1,10 @@
 """Train an anomaly detector on server metrics and track it with MLflow."""
 import argparse
+import json
+from datetime import datetime, timezone
+from pathlib import Path
 
+import joblib
 import mlflow
 import mlflow.sklearn
 import numpy as np
@@ -83,6 +87,24 @@ def zscore_baseline(train, test, threshold):
     return (scores > threshold).astype(int), scores
 
 
+def export_model(pipe, metrics, run_id, version):
+    """Save the model in a plain folder so the API can load it without MLflow."""
+    out = Path("models/current")
+    out.mkdir(parents=True, exist_ok=True)
+    joblib.dump(pipe, out / "model.joblib")
+    meta = {
+        "features": FEATURES,
+        "servers": SERVERS,
+        "model_name": MODEL_NAME,
+        "model_version": str(version) if version else None,
+        "mlflow_run_id": run_id,
+        "trained_at": datetime.now(timezone.utc).isoformat(),
+        "metrics": {k: round(float(v), 4) for k, v in metrics.items()},
+    }
+    (out / "metadata.json").write_text(json.dumps(meta, indent=2))
+    print(f"Model exported to {out}/ (MLflow version {version})")
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--csv", default="data/metrics.csv")
@@ -135,11 +157,13 @@ def main():
         mlflow.log_metrics(m)
         print("Isolation Forest :", {k: round(v, 3) for k, v in m.items()})
 
-        mlflow.sklearn.log_model(
+        info = mlflow.sklearn.log_model(
             pipe, name="model", serialization_format="cloudpickle",
             input_example=train[FEATURES].head(5),
             registered_model_name=MODEL_NAME,
         )
+        export_model(pipe, m, mlflow.active_run().info.run_id,
+                     getattr(info, "registered_model_version", None))
     print(f"\nModel registered as '{MODEL_NAME}'. Open the UI with:\n"
           f"  mlflow ui --backend-store-uri {TRACKING_URI}")
 

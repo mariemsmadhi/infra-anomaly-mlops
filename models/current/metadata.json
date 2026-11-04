@@ -1,0 +1,27 @@
+{
+  "features": [
+    "cpu_pct",
+    "mem_pct",
+    "disk_pct",
+    "load1",
+    "net_rx_kbps",
+    "net_tx_kbps",
+    "is_web01",
+    "is_db01"
+  ],
+  "servers": [
+    "web01",
+    "db01"
+  ],
+  "model_name": "infra-anomaly-detector",
+  "model_version": "7",
+  "mlflow_run_id": "43ccfa17e3e24fc4bdb3d39dbd8168de",
+  "trained_at": "2026-10-20T19:37:07.158823+00:00",
+  "metrics": {
+    "precision": 1.0,
+    "recall": 0.6667,
+    "f1": 0.8,
+    "roc_auc": 0.8756,
+    "false_alarm_rate": 0.0
+  }
+}

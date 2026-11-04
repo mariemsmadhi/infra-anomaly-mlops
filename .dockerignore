@@ -1,0 +1,10 @@
+.venv
+.git
+.vagrant
+data
+models
+mlflow.db
+mlartifacts
+mlruns
+__pycache__
+tests

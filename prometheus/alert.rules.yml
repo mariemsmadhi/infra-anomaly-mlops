@@ -1,0 +1,40 @@
+groups:
+  - name: anomaly-detection
+    rules:
+      - alert: ServerAnomalyDetected
+        expr: anomaly_flag == 1
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: "Anomaly detected on {{ $labels.server }}"
+          description: "The model flags {{ $labels.server }} as abnormal. Check Grafana and the server."
+
+      - alert: AnomalyModelNotLoaded
+        expr: anomaly_model_loaded == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "The anomaly API has no model loaded"
+          description: "Run python src/train.py, then curl -X POST localhost:8000/reload."
+
+      - alert: NoPredictionsReceived
+        expr: sum(rate(anomaly_predictions_total[2m])) == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No predictions in the last 2 minutes"
+          description: "src/monitor.py is probably stopped, so nothing checks the servers."
+
+  - name: infrastructure
+    rules:
+      - alert: NodeExporterDown
+        expr: up{job="node"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.instance_name }} is not reachable"
+          description: "Prometheus cannot scrape Node Exporter on {{ $labels.instance }}."

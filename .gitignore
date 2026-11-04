@@ -1,0 +1,8 @@
+__pycache__/
+mlflow.db
+mlartifacts/
+mlruns/
+logs/
+.venv
+.vagrant
+.github
